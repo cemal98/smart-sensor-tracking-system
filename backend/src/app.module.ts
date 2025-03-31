@@ -4,29 +4,26 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
-
 // Import modules
 import { InfluxDBModule } from './influxdb/influxdb.module';
 import { LoggingModule } from './logging/logging.module';
-
-// Other modules will be imported later
-// import { AuthModule } from './auth/auth.module';
-// import { UsersModule } from './users/users.module';
-// import { CompaniesModule } from './companies/companies.module';
-// import { SensorsModule } from './sensors/sensors.module';
-// import { MqttModule } from './mqtt/mqtt.module';
-// import { UserActivityModule } from './user-activity/user-activity.module';
+import { SensorsModule } from './sensors/sensors.module';
+import { MqttModule } from './mqtt/mqtt.module';
+import { AuthModule } from './auth/auth.module';
+import { UserActivityModule } from './user-activity/user-activity.module';
+import { UsersModule } from './users/users.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
-    // Configuration
+    // Konfigürasyon
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
       validationSchema,
     }),
     
-    // PostgreSQL Database
+    // PostgreSQL Veritabanı
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -40,26 +37,31 @@ import { LoggingModule } from './logging/logging.module';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: configService.get('database.synchronize'),
         logging: configService.get('database.logging'),
+        dropSchema: process.env.NODE_ENV === 'development' && process.env.DB_DROP_SCHEMA === 'true',
       }),
     }),
     
     // Rate limiting
-    ThrottlerModule.forRoot([{
-      ttl: 60,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => [
+        {
+          ttl: configService.get<number>('throttle.ttl', 60),
+          limit: configService.get<number>('throttle.limit', 100),
+        },
+      ],
+    }),
     
-    // Core modules
+    // Temel modüller
     InfluxDBModule,
     LoggingModule,
-    
-    // Other modules will be added later
-    // AuthModule,
-    // UsersModule, 
-    // CompaniesModule,
-    // SensorsModule,
-    // MqttModule,
-    // UserActivityModule,
+    UsersModule,
+    CompaniesModule,
+    SensorsModule,
+    MqttModule,
+    AuthModule,
+    UserActivityModule,
   ],
 })
 export class AppModule {}
