@@ -9,7 +9,7 @@ export class InfluxDBService implements OnModuleInit {
   private bucket: string = '';
   private readonly logger = new Logger(InfluxDBService.name);
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) { }
 
   onModuleInit() {
     const url = this.configService.get<string>('influxdb.url') || '';
@@ -37,20 +37,20 @@ export class InfluxDBService implements OnModuleInit {
 
     try {
       const writeApi = this.client.getWriteApi(this.org, this.bucket);
-      
+
       const point = new Point('sensor_data')
         .tag('sensor_id', sensorData.sensor_id)
         .timestamp(new Date(sensorData.timestamp * 1000));
-      
+
       Object.entries(sensorData).forEach(([key, value]) => {
         if (key !== 'sensor_id' && key !== 'timestamp' && typeof value === 'number') {
           point.floatField(key, value);
         }
       });
-      
+
       writeApi.writePoint(point);
       await writeApi.close();
-      
+
       this.logger.debug(`${sensorData.sensor_id} sensörü için veri InfluxDB'ye yazıldı`);
     } catch (error) {
       this.logger.error(`Sensör verisi InfluxDB'ye yazılırken hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
@@ -65,26 +65,26 @@ export class InfluxDBService implements OnModuleInit {
 
     try {
       const queryApi = this.client.getQueryApi(this.org);
-      
+
       let query = `from(bucket: "${this.bucket}")
         |> range(start: ${start}`;
-      
+
       if (end) {
         query += `, stop: ${end}`;
       }
-      
+
       query += `)
         |> filter(fn: (r) => r._measurement == "sensor_data")
         |> filter(fn: (r) => r.sensor_id == "${sensorId}")`;
-      
+
       if (fields && fields.length > 0) {
         query += `
         |> filter(fn: (r) => ${fields.map(field => `r._field == "${field}"`).join(' or ')})`;
       }
-      
+
       query += `
         |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`;
-      
+
       const result = await queryApi.collectRows(query);
       return result;
     } catch (error) {

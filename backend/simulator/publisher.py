@@ -23,7 +23,7 @@ conn = psycopg2.connect(
 )
 
 cursor = conn.cursor()
-cursor.execute('SELECT "sensorId", "mqttTopic" FROM "sensors" WHERE "isActive" = true')
+cursor.execute('SELECT id, "mqttTopic" FROM "sensors" WHERE "isActive" = true')
 sensors = cursor.fetchall()
 
 # MQTT Client tanımı

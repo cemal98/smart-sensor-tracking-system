@@ -12,7 +12,7 @@ const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'sensor_tracking',
   synchronize: false,
-  logging: true,
+  logging: false,
   entities: [User, Company, Sensor, UserActivity],
   migrations: ['dist/migrations/*.js'],
   migrationsTableName: 'migrations',

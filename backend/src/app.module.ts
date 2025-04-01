@@ -22,7 +22,7 @@ import { CompaniesModule } from './companies/companies.module';
       load: [configuration],
       validationSchema,
     }),
-    
+
     // PostgreSQL Veritabanı
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -36,11 +36,13 @@ import { CompaniesModule } from './companies/companies.module';
         database: configService.get('database.name'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: configService.get('database.synchronize'),
-        logging: configService.get('database.logging'),
-        dropSchema: process.env.NODE_ENV === 'development' && process.env.DB_DROP_SCHEMA === 'true',
+        logging: false,
+        dropSchema:
+          process.env.NODE_ENV === 'development' &&
+          process.env.DB_DROP_SCHEMA === 'true',
       }),
     }),
-    
+
     // Rate limiting
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
@@ -52,7 +54,7 @@ import { CompaniesModule } from './companies/companies.module';
         },
       ],
     }),
-    
+
     // Temel modüller
     InfluxDBModule,
     LoggingModule,
@@ -64,4 +66,4 @@ import { CompaniesModule } from './companies/companies.module';
     UserActivityModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
